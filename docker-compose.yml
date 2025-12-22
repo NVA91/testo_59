@@ -2,36 +2,51 @@ version: '3.8'
 
 services:
   mqtt-broker:
-    image: eclipse-mosquitto:latest
+    image: eclipse-mosquitto:2.0
+    hostname: mqtt-broker
     container_name: home-mqtt-broker
+    networks:
+      - home-network
     ports:
       - "1883:1883"
       - "9001:9001"
     volumes:
-      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - ./config:/mosquitto/config
       - mqtt_data:/mosquitto/data
       - mqtt_logs:/mosquitto/log
-    networks:
-      - home-network
     restart: unless-stopped
+    environment:
+      - TZ=Europe/Berlin
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   home-automation:
     build: .
     container_name: home-automation-app
-    depends_on:
-      - mqtt-broker
     environment:
       - MQTT_BROKER=mqtt-broker
       - MQTT_PORT=1883
       - MQTT_USER=homeautomation
       - MQTT_PASSWORD=secure_password_123
       - LOG_LEVEL=INFO
+      - TZ=Europe/Berlin
+      - PYTHONUNBUFFERED=1
     volumes:
       - ./logs:/app/logs
       - ./data:/app/data
     networks:
       - home-network
     restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+    depends_on:
+      - mqtt-broker
 
 networks:
   home-network:
