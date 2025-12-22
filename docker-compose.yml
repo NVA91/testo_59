@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:latest
+    container_name: home-mqtt-broker
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf
+      - mqtt_data:/mosquitto/data
+      - mqtt_logs:/mosquitto/log
+    networks:
+      - home-network
+    restart: unless-stopped
+
+  home-automation:
+    build: .
+    container_name: home-automation-app
+    depends_on:
+      - mqtt-broker
+    environment:
+      - MQTT_BROKER=mqtt-broker
+      - MQTT_PORT=1883
+      - MQTT_USER=homeautomation
+      - MQTT_PASSWORD=secure_password_123
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./logs:/app/logs
+      - ./data:/app/data
+    networks:
+      - home-network
+    restart: unless-stopped
+
+networks:
+  home-network:
+    driver: bridge
+
+volumes:
+  mqtt_data:
+  mqtt_logs:
