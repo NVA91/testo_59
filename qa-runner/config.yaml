@@ -1,0 +1,26 @@
+app:
+  name: qa-backend
+  version: "1.0"
+
+paths:
+  base_dir: /app
+  jobs_dir: /app/jobs
+  logs_dir: /app/logs
+  uploads_dir: /app/uploads
+
+upload:
+  max_bytes: 2000000
+  allowed_ext: ".csv"
+
+subprocess:
+  timeout_seconds: 30
+
+suites:
+  files:
+    - ["/bin/ls", "-lah", "/app"]
+  dev:
+    - ["/usr/bin/python", "--version"]
+  db:
+    - ["/bin/echo", "db-suite-not-configured"]
+  network:
+    - ["/bin/echo", "network-suite-not-configured"]

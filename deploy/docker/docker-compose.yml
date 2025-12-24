@@ -1,0 +1,12 @@
+services:
+  tester:
+    image: qa-runner
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile
+    container_name: home-automation-qa
+    env_file:
+      - ../../.env
+    environment:
+      - PYTHONPATH=/app/qa-runner/backend
+    restart: "no"
