@@ -12,3 +12,4 @@ mosquitto_passwd
 *.tar.gz
 venv/
 venv/
+.pytest_cache/
