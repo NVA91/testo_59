@@ -9,19 +9,21 @@ werden als JSON in `/var/log/baseline-monitor/` gespeichert.
 ```
 baseline-monitor/
 ├── config/
-│   └── baseline-monitor.conf   # Zentrale Konfiguration (hier anpassen!)
+│   └── baseline-monitor.conf     # Zentrale Konfiguration (hier anpassen!)
 ├── scripts/
-│   ├── portscan.py             # Host-Entdeckung (arp-scan) + Port-Scan (nmap)
-│   ├── latency.py              # Latenz-Test (ping + mtr)
-│   ├── bandwidth.py            # Bandbreiten-Test (iperf3)
-│   └── analyze.py              # Auswertung + HTML-Report (plotly/pandas)
+│   ├── setup_wizard.py           # Interaktiver Konfigurations-Wizard
+│   ├── preflight.py              # Sicherheits- und Plausibilitätsprüfung
+│   ├── portscan.py               # Host-Entdeckung (arp-scan) + Port-Scan (nmap)
+│   ├── latency.py                # Latenz-Test (ping + mtr)
+│   ├── bandwidth.py              # Bandbreiten-Test (iperf3)
+│   └── analyze.py                # Auswertung + HTML-Report (plotly/pandas)
 ├── systemd/
 │   ├── baseline-monitor.service
-│   └── baseline-monitor.timer  # Alle 15 Minuten
+│   └── baseline-monitor.timer    # Alle 15 Minuten
 ├── setup/
-│   ├── install.sh              # Installations-Skript
+│   ├── install.sh                # Installations-Skript
 │   └── requirements-baseline.txt
-└── run_all.sh                  # Startet alle drei Skripte nacheinander
+└── run_all.sh                    # Master-Skript (Standard + interaktiv)
 ```
 
 ## Voraussetzungen
@@ -48,6 +50,24 @@ ihn nach erfolgreichem manuellem Test freischaltest.
 
 ## Konfiguration anpassen
 
+### Option A: Setup-Wizard (empfohlen)
+
+Der interaktive Wizard erkennt das Netzwerk automatisch und führt
+Schritt für Schritt durch alle Einstellungen mit Eingabevalidierung:
+
+```bash
+python3 /opt/baseline-monitor/scripts/setup_wizard.py
+```
+
+Der Wizard:
+- Erkennt Netzwerk-Interfaces und Gateway automatisch
+- Validiert alle Eingaben (IP-Format, CIDR, Ports, etc.)
+- Schlägt sinnvolle Standardwerte vor
+- Testet SSH-Verbindung (wenn aktiviert)
+- Erstellt automatisch ein Backup der alten Konfiguration
+
+### Option B: Manuell bearbeiten
+
 ```bash
 nano /opt/baseline-monitor/config/baseline-monitor.conf
 ```
@@ -61,9 +81,51 @@ Zwingend anzupassen:
 | `SCAN_INTERFACE` | Netzwerk-Interface | `eth0` / `enp3s0` |
 | `IPERF3_SERVER_IP` | IP der iperf3-Gegenstelle | `127.0.0.1` für Loopback |
 
+## Preflight-Check (Sicherheitsprüfung)
+
+Nach der Konfiguration prüft der Preflight-Check ob alles bereit ist:
+
+```bash
+python3 /opt/baseline-monitor/scripts/preflight.py \
+     --config /opt/baseline-monitor/config/baseline-monitor.conf
+```
+
+Prüft automatisch:
+- Pflicht-Variablen gesetzt und gültig (IP-Format, CIDR, Ports)
+- Netzwerk-Interface existiert und hat eine IP
+- Alle benötigten Tools installiert (nmap, arp-scan, mtr, iperf3, ...)
+- Log-Verzeichnis vorhanden und beschreibbar
+- SSH-Schlüssel vorhanden und Rechte korrekt (wenn SSH aktiv)
+- Latenz-Ziele erreichbar (Quick-Ping)
+
+Mit `--fix` werden behebbare Probleme automatisch korrigiert:
+```bash
+sudo python3 scripts/preflight.py --config .../baseline-monitor.conf --fix
+```
+
 ## Manueller Test (Sicherheits-Workflow)
 
 **Vor der Automatisierung zuerst manuell testen!**
+
+### Interaktiver Modus (empfohlen für den ersten Lauf)
+
+Der interaktive Modus fragt vor **jedem Schritt** nach Bestätigung,
+zeigt das Ergebnis und lässt prüfen ob die Ausgabe plausibel ist:
+
+```bash
+sudo bash /opt/baseline-monitor/run_all.sh --interactive --preflight
+```
+
+Ablauf:
+1. Preflight-Check (alle Voraussetzungen prüfen)
+2. Portscan → Bestätigung → Ergebnis-Prüfung
+3. Latenz-Test → Bestätigung → Ergebnis-Prüfung
+4. Bandbreite → Bestätigung → Ergebnis-Prüfung
+5. Log-Übersicht → Angebot den Systemd-Timer zu aktivieren
+
+Jeder Schritt kann übersprungen oder abgebrochen werden.
+
+### Einzelne Skripte testen
 
 ```bash
 # 1. Portscan testen (benötigt Root für arp-scan)
@@ -82,7 +144,8 @@ python3 /opt/baseline-monitor/scripts/bandwidth.py \
 ls -lh /var/log/baseline-monitor/
 ```
 
-Oder alles auf einmal:
+### Automatischer Modus (für Systemd-Timer)
+
 ```bash
 sudo bash /opt/baseline-monitor/run_all.sh
 ```
