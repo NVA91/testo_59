@@ -35,7 +35,7 @@ pyarrow==22.0.0
 pydantic==2.12.5
 pydantic_core==2.41.5
 pydeck==0.9.1
-pytest==7.4.3
+pytest==9.0.3
 pytest-cov==4.1.0
 pytest-mock==3.12.0
 pytest-timeout==2.4.0
