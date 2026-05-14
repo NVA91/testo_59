@@ -1,0 +1,14 @@
+[Unit]
+Description=Netzwerk-Baseline-Monitoring – Timer (alle 15 Minuten)
+Requires=baseline-monitor.service
+
+[Timer]
+# Erster Lauf 5 Minuten nach dem Systemstart
+OnBootSec=5min
+# Danach alle 15 Minuten
+OnUnitActiveSec=15min
+# Letzten Ausführungszeitpunkt persistieren (Nachholen nach Ausfall/Neustart)
+Persistent=true
+
+[Install]
+WantedBy=timers.target

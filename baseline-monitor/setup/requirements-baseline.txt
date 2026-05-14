@@ -1,0 +1,18 @@
+# Python-Abhängigkeiten für das Netzwerk-Baseline-Monitoring
+#
+# Installation (Ubuntu 24.04 LTS – systemweit):
+#   pip3 install -r requirements-baseline.txt --break-system-packages
+#
+# Alternative (virtuelle Umgebung):
+#   python3 -m venv venv
+#   source venv/bin/activate
+#   pip install -r requirements-baseline.txt
+
+# Auswertung & Visualisierung
+networkx>=3.0
+plotly>=5.0
+pandas>=2.0
+
+# SSH-Automatisierung (für remote iperf3-Server-Start)
+paramiko>=3.0
+fabric>=3.2

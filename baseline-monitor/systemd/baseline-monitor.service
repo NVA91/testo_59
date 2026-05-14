@@ -1,0 +1,15 @@
+[Unit]
+Description=Netzwerk-Baseline-Monitoring – einmaliger Messlauf
+Documentation=https://github.com/nva91/testo_59
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+WorkingDirectory=/opt/baseline-monitor
+ExecStart=/bin/bash /opt/baseline-monitor/run_all.sh
+StandardOutput=journal
+StandardError=journal
+# Großzügiges Timeout: iperf3 + nmap können etwas dauern
+TimeoutStartSec=600
